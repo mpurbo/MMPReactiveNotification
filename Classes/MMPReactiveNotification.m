@@ -1,50 +1,90 @@
 //
 //  MMPReactiveNotification.m
-//  GeocoreDemo
 //
-//  Created by Purbo Mohamad on 2/21/15.
-//  Copyright (c) 2015 MapMotion. All rights reserved.
+//  The MIT License (MIT)
+//  Copyright (c) 2015 Mamad Purbo, purbo.org
 //
 
 #import "MMPReactiveNotification.h"
 
+#ifdef DEBUG
+#   define MMPRxN_LOG(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+#else
+#   define MMPRxN_LOG(...)
+#endif
+
 @interface MMPReactiveNotification()
+
+@property (nonatomic, assign) UIResponder<UIApplicationDelegate> *delegate;
+
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+@property (nonatomic, assign) UIUserNotificationType types;
+@property (nonatomic, copy) NSSet *categories;
+#else
+@property (nonatomic, assign) UIRemoteNotificationType types;
+#endif
 
 @end
 
 @implementation MMPReactiveNotification
 
-+ (instancetype)instance {
-    static dispatch_once_t once;
-    static id shared = nil;
-    dispatch_once(&once, ^{
-        shared = [[super alloc] initSingletonInstance];
-    });
-    return shared;
-}
-
-- (instancetype)initSingletonInstance {
+- (id)init {
     if (self = [super init]) {
+        [self defaultSettings];
+        
+        UIApplication *app = [UIApplication sharedApplication];
+        self.delegate = app.delegate;
     }
     return self;
 }
 
+- (void)defaultSettings {
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+    self.types = UIUserNotificationTypeAlert | UIUserNotificationTypeBadge | UIUserNotificationTypeSound;
+    self.categories = nil;
+#else
+    self.types = UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert;
+#endif
+}
+
++ (instancetype)service {
+    return [MMPReactiveNotification new];
+}
+
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+
+- (instancetype)notificationTypes:(UIUserNotificationType)types {
+    self.types = types;
+    return self;
+}
+
+- (instancetype)categories:(NSSet *)categories {
+    self.categories = categories;
+    return self;
+}
+
+#else
+
+- (instancetype)notificationTypes:(UIRemoteNotificationType)types {
+    self.types = types;
+    return self;
+}
+
+#endif
+
 - (RACSignal *)remoteRegistration {
-    RACMulticastConnection *conn = [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
+    return [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
         
-        UIApplication *app = [UIApplication sharedApplication];
-        UIResponder<UIApplicationDelegate> *delegate = app.delegate;
-        
-        RACSignal *reg = [[delegate rac_signalForSelector:@selector(application:didRegisterForRemoteNotificationsWithDeviceToken:)
-                                             fromProtocol:@protocol(UIApplicationDelegate)]
-                                    reduceEach:^id(id _, NSData *deviceToken) {
-                                        return deviceToken;
-                                    }];
-        RACSignal *err = [[delegate rac_signalForSelector:@selector(application:didFailToRegisterForRemoteNotificationsWithError:)
-                                             fromProtocol:@protocol(UIApplicationDelegate)]
-                                    reduceEach:^id(id _, NSError *error) {
-                                        return error;
-                                    }];
+        RACSignal *reg = [[self.delegate rac_signalForSelector:@selector(application:didRegisterForRemoteNotificationsWithDeviceToken:)
+                                                  fromProtocol:@protocol(UIApplicationDelegate)]
+                                         reduceEach:^id(id _, NSData *deviceToken) {
+                                             return deviceToken;
+                                         }];
+        RACSignal *err = [[self.delegate rac_signalForSelector:@selector(application:didFailToRegisterForRemoteNotificationsWithError:)
+                                                  fromProtocol:@protocol(UIApplicationDelegate)]
+                                         reduceEach:^id(id _, NSError *error) {
+                                             return error;
+                                         }];
         
         [reg subscribeNext:^(NSData *deviceToken) {
             [subscriber sendNext:deviceToken];
@@ -55,43 +95,31 @@
             [subscriber sendError:error];
         }];
         
+        MMPRxN_LOG(@"Registering for push.")
+        
+        UIApplication *app = [UIApplication sharedApplication];
+        
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
-        [app registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:UIUserNotificationTypeAlert |
-                                                                                           UIUserNotificationTypeBadge |
-                                                                                           UIUserNotificationTypeSound
-                                                                                categories:nil]];
+        [app registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:self.types
+                                                                                categories:self.categories]];
         [app registerForRemoteNotifications];
 #else
-        if ([app respondsToSelector:@selector(registerUserNotificationSettings:)]) {
-            [app registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:(UIRemoteNotificationTypeBadge |
-                                                                                                UIRemoteNotificationTypeSound |
-                                                                                                UIRemoteNotificationTypeAlert)
-                                                                                    categories:nil]];
-            [app registerForRemoteNotifications];
-        } else {
-            [app registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge |
-                                                     UIRemoteNotificationTypeSound |
-                                                     UIRemoteNotificationTypeAlert)];
-        }
+        [app registerForRemoteNotificationTypes:self.types];
 #endif
         
         return [RACDisposable disposableWithBlock:^{
+            MMPRxN_LOG(@"Disposing subscriber for push registration.")
         }];
         
-    }] publish];
-    
-    [conn connect];
-    return conn.signal;
+    }];
 }
 
 - (RACSignal *)remoteNotifications {
-    UIApplication *app = [UIApplication sharedApplication];
-    UIResponder<UIApplicationDelegate> *delegate = app.delegate;
-    return [[delegate rac_signalForSelector:@selector(application:didReceiveRemoteNotification:)
-                               fromProtocol:@protocol(UIApplicationDelegate)]
-                      reduceEach:^id(id _, NSDictionary *userInfo) {
-                          return userInfo;
-                      }];
+    return [[self.delegate rac_signalForSelector:@selector(application:didReceiveRemoteNotification:)
+                                    fromProtocol:@protocol(UIApplicationDelegate)]
+                           reduceEach:^id(id _, NSDictionary *userInfo) {
+                               return userInfo;
+                           }];
 }
 
 @end
