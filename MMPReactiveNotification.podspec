@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = "MMPReactiveNotification"
-  s.version          = "0.2.0"
+  s.version          = "0.3.0"
   s.summary          = "Local and remote push notifications as reactive signals with ReactiveCocoa"
   s.description      = <<-DESC
                        MMPReactiveNotification is a reactive library providing signals for local and remote push notifications.
@@ -10,6 +10,8 @@ Pod::Spec.new do |s|
                        * Signal for remote push registration.
                        * Signal for receiving remote notifications.
                        * Signal for receiving local notifications.
+                       * Signal for notification settings registration.
+                       * Local notification scheduling.
                        DESC
   s.homepage         = "https://github.com/mpurbo/MMPReactiveNotification"
   s.license          = 'MIT'
@@ -21,5 +23,5 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = '7.0'
   s.source_files     = 'Classes'
   s.dependency 'ReactiveCocoa'
-  s.requires_arc     = true    
+  s.requires_arc     = true
 end

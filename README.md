@@ -7,6 +7,8 @@ Features:
 * Signal for remote push registration.
 * Signal for receiving remote notifications.
 * Signal for receiving local notifications.
+* Signal for notification settings registration.
+* Local notification scheduling.
 
 ## Installation
 
@@ -44,6 +46,22 @@ To receive remote push notifications, use `remoteNotifications` method:
                            }];
 ```
 
+To receive local notifications, use `remoteNotifications` method:
+```objc
+[[[MMPReactiveNotification service]
+                           localNotifications]
+                           subscribeNext:^(UILocalNotification *localNotification) {
+                               NSLog(@"Receiving local notification: %@", localNotification.alertBody);
+                           }];
+```
+
+To schedule a local notification, use `scheduleLocalNotification:`, `scheduleLocalNotificationWithAlert:toBeFiredAt:`, or `scheduleLocalNotificationWithAlert:withSound:toBeFiredAt:` method:
+```objc
+[[MMPReactiveNotification service] scheduleLocalNotificationWithAlert:@"Hello, is it me you're looking for?"
+                                                          toBeFiredAt:someDate];
+```
+This scheduling will also automatically register notification settings if it hasn't been done previously.
+
 ## Custom Settings
 
 Default settings for remote push registration are:
@@ -58,14 +76,13 @@ To customize these settings, use `notificationTypes` and `categories` methods as
                             remoteRegistration]
                             subscribeNext:^(NSData *tokenData) {
                                 NSLog(@"Receiving push token: %@", tokenData);
-                               // Send the push token to your server
+                                // Send the push token to your server
                             }];
 ```
 
 ## Roadmap
 
-* 0.3: Remote notification with custom handler, `didFinishLaunchingWithOptions` integration.
-* 0.4: Local notifications.
+* 0.4: Remote notification with custom handler, `didFinishLaunchingWithOptions` integration.
 
 ## Contact
 

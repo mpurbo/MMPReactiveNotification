@@ -44,7 +44,39 @@
 // Settings
 // =============================================================================
 
+/**
+ *  Register for remote notification based. Returned signal produces remote 
+ *  notification token.
+ *
+ *  @return Signal producing remote notification token as NSData.
+ */
 - (RACSignal *)remoteRegistration;
+
+/**
+ *  Returns a signal that will produces an NSDictionary every time the app 
+ *  receives remote push notification.
+ *
+ *  @return Signal producing NSDictionary push data.
+ */
 - (RACSignal *)remoteNotifications;
+
+/**
+ *  Returns a signal that will produces an UILocalNotification every time the 
+ *  app receives local notification.
+ *
+ *  @return Signal producing UILocalNotification.
+ */
+- (RACSignal *)localNotifications;
+
+- (RACSignal *)userNotificationSettingsRegistration;
+
+/**
+ *  Simple wrapper of UIApplication's scheduleLocalNotification:
+ *
+ *  @param notification local notification to be scheduled.
+ */
+- (void)scheduleLocalNotification:(UILocalNotification *)notification;
+- (void)scheduleLocalNotificationWithAlert:(NSString *)alertBody toBeFiredAt:(NSDate *)fireDate;
+- (void)scheduleLocalNotificationWithAlert:(NSString *)alertBody withSound:(NSString *)soundName toBeFiredAt:(NSDate *)fireDate;
 
 @end

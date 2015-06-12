@@ -1,5 +1,10 @@
 # MMPReactiveNotification CHANGELOG
 
+## 0.3.0
+
+* Local notification signal & scheduling.
+* Notification settings registration signal.
+
 ## 0.2.0
 
 * Replace singleton with settable service.
