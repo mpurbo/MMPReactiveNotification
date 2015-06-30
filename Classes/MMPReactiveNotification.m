@@ -58,6 +58,17 @@
     return self;
 }
 
+- (instancetype)category:(UIMutableUserNotificationCategory *)category {
+    if (!self.categories) {
+        self.categories = [NSMutableSet setWithObject:category];
+    } else {
+        if ([_categories isKindOfClass:[NSMutableSet class]]) {
+            [(NSMutableSet *)_categories addObject:category];
+        }
+    }
+    return self;
+}
+
 - (instancetype)categories:(NSSet *)categories {
     self.categories = categories;
     return self;
@@ -137,10 +148,36 @@
 
 - (RACSignal *)localNotifications {
     return [[self.delegate rac_signalForSelector:@selector(application:didReceiveLocalNotification:)
-                                   fromProtocol:@protocol(UIApplicationDelegate)]
+                                    fromProtocol:@protocol(UIApplicationDelegate)]
                            reduceEach:^id(id _, UILocalNotification *notification) {
                                return notification;
                            }];
+}
+
+- (RACSignal *)localNotificationsWithActionIdentifier:(NSString *)actionIdentifier {
+    return [[[self.delegate rac_signalForSelector:@selector(application:handleActionWithIdentifier:forLocalNotification:completionHandler:)
+                                    fromProtocol:@protocol(UIApplicationDelegate)]
+                            filter:^BOOL(RACTuple *tuple) {
+                                NSString *comingIdentifier = tuple.second;
+                                MMPRxN_LOG(@"Filtering coming action with identifier: %@, expecting identifier: %@", comingIdentifier, actionIdentifier)
+                                return (actionIdentifier == nil || [actionIdentifier isEqualToString:comingIdentifier]);
+                            }]
+                            reduceEach:^id(id _, id identifier, UILocalNotification *notification, id completionHandler) {
+                                return notification;
+                            }];
+}
+
+- (RACSignal *)localNotificationsOnLaunch {
+    return [[[self.delegate rac_signalForSelector:@selector(application:didFinishLaunchingWithOptions:)
+                                     fromProtocol:@protocol(UIApplicationDelegate)]
+                            filter:^BOOL(RACTuple *tuple) {
+                                NSDictionary *launchOptions = tuple.second;
+                                MMPRxN_LOG(@"Filtering application launch with options: %@, expecting local notification", launchOptions)
+                                return (launchOptions && [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey]);
+                            }]
+                            reduceEach:^id(id _, NSDictionary *launchOptions) {
+                                return [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
+                            }];
 }
 
 - (void)scheduleLocalNotification:(UILocalNotification *)notification {
@@ -165,14 +202,30 @@
 }
 
 - (void)scheduleLocalNotificationWithAlert:(NSString *)alertBody toBeFiredAt:(NSDate *)fireDate {
-    [self scheduleLocalNotificationWithAlert:alertBody withSound:UILocalNotificationDefaultSoundName toBeFiredAt:fireDate];
+    [self scheduleLocalNotificationWithAlert:alertBody withSound:UILocalNotificationDefaultSoundName withUserInfo:nil withCategory:nil toBeFiredAt:fireDate];
 }
 
-- (void)scheduleLocalNotificationWithAlert:(NSString *)alertBody withSound:(NSString *)soundName toBeFiredAt:(NSDate *)fireDate {
-    UILocalNotification *localNotification = [[UILocalNotification alloc] init];
+- (void)scheduleLocalNotificationWithAlert:(NSString *)alertBody
+                              withUserInfo:(NSDictionary *)userInfo
+                               toBeFiredAt:(NSDate *)fireDate {
+    [self scheduleLocalNotificationWithAlert:alertBody withSound:UILocalNotificationDefaultSoundName withUserInfo:userInfo withCategory:nil toBeFiredAt:fireDate];
+}
+
+- (void)scheduleLocalNotificationWithAlert:(NSString *)alertBody
+                                 withSound:(NSString *)soundName
+                              withUserInfo:(NSDictionary *)userInfo
+                              withCategory:(NSString *)category
+                               toBeFiredAt:(NSDate *)fireDate {
+    UILocalNotification *localNotification = [UILocalNotification new];
     localNotification.fireDate = fireDate;
     localNotification.alertBody = alertBody;
     localNotification.soundName = soundName;
+    if (userInfo) {
+        localNotification.userInfo = userInfo;
+    }
+    if (category) {
+        localNotification.category = category;
+    }
     [self scheduleLocalNotification:localNotification];
 }
 

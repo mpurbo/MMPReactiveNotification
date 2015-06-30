@@ -35,6 +35,7 @@
 
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
 - (instancetype)notificationTypes:(UIUserNotificationType)types;
+- (instancetype)category:(UIMutableUserNotificationCategory *)category;
 - (instancetype)categories:(NSSet *)categories;
 #else
 - (instancetype)notificationTypes:(UIRemoteNotificationType)types;
@@ -67,6 +68,8 @@
  *  @return Signal producing UILocalNotification.
  */
 - (RACSignal *)localNotifications;
+- (RACSignal *)localNotificationsWithActionIdentifier:(NSString *)actionIdentifier;
+- (RACSignal *)localNotificationsOnLaunch;
 
 - (RACSignal *)userNotificationSettingsRegistration;
 
@@ -77,6 +80,13 @@
  */
 - (void)scheduleLocalNotification:(UILocalNotification *)notification;
 - (void)scheduleLocalNotificationWithAlert:(NSString *)alertBody toBeFiredAt:(NSDate *)fireDate;
-- (void)scheduleLocalNotificationWithAlert:(NSString *)alertBody withSound:(NSString *)soundName toBeFiredAt:(NSDate *)fireDate;
+- (void)scheduleLocalNotificationWithAlert:(NSString *)alertBody
+                              withUserInfo:(NSDictionary *)userInfo
+                               toBeFiredAt:(NSDate *)fireDate;
+- (void)scheduleLocalNotificationWithAlert:(NSString *)alertBody
+                                 withSound:(NSString *)soundName
+                              withUserInfo:(NSDictionary *)userInfo
+                              withCategory:(NSString *)category
+                               toBeFiredAt:(NSDate *)fireDate;
 
 @end

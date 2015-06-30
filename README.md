@@ -46,7 +46,7 @@ To receive remote push notifications, use `remoteNotifications` method:
                            }];
 ```
 
-To receive local notifications, use `remoteNotifications` method:
+To receive local notifications, use `localNotifications` method:
 ```objc
 [[[MMPReactiveNotification service]
                            localNotifications]
@@ -55,7 +55,7 @@ To receive local notifications, use `remoteNotifications` method:
                            }];
 ```
 
-To schedule a local notification, use `scheduleLocalNotification:`, `scheduleLocalNotificationWithAlert:toBeFiredAt:`, or `scheduleLocalNotificationWithAlert:withSound:toBeFiredAt:` method:
+To schedule a local notification, use `scheduleLocalNotification:`, `scheduleLocalNotificationWithAlert:toBeFiredAt:` methods or some other variants (see the header file):
 ```objc
 [[MMPReactiveNotification service] scheduleLocalNotificationWithAlert:@"Hello, is it me you're looking for?"
                                                           toBeFiredAt:someDate];
