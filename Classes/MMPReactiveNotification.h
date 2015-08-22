@@ -71,6 +71,8 @@
 - (RACSignal *)localNotificationsWithActionIdentifier:(NSString *)actionIdentifier;
 - (RACSignal *)localNotificationsOnLaunch;
 
+- (RACSignal *)remoteNotificationsOnLaunch;
+
 - (RACSignal *)userNotificationSettingsRegistration;
 
 /**

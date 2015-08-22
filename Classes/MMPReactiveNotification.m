@@ -180,6 +180,19 @@
                             }];
 }
 
+- (RACSignal *)remoteNotificationsOnLaunch {
+    return [[[self.delegate rac_signalForSelector:@selector(application:didFinishLaunchingWithOptions:)
+                                     fromProtocol:@protocol(UIApplicationDelegate)]
+             filter:^BOOL(RACTuple *tuple) {
+                 NSDictionary *launchOptions = tuple.second;
+                 MMPRxN_LOG(@"Filtering application launch with options: %@, expecting remote notification", launchOptions)
+                 return (launchOptions && [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey]);
+             }]
+            reduceEach:^id(id _, NSDictionary *launchOptions) {
+                return [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
+            }];
+}
+
 - (void)scheduleLocalNotification:(UILocalNotification *)notification {
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
     if (![self notificationTypesUpToDate]) {
