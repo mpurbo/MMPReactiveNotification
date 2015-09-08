@@ -25,6 +25,32 @@
 #import <UIKit/UIKit.h>
 #import <ReactiveCocoa/ReactiveCocoa.h>
 
+@interface MMPLocalNotificationSpec : NSObject
+
+- (id)initWithNotification:(UILocalNotification *)notification;
+
+// Composing
+- (instancetype)withAlertBody:(NSString *)alertBody;
+- (instancetype)withAlertAction:(NSString *)alertAction;
+- (instancetype)withAlertTitle:(NSString *)alertTitle;
+- (instancetype)withAlertLaunchImage:(NSString *)alertLaunchImage;
+- (instancetype)withCategory:(NSString *)category;
+- (instancetype)hasAction:(BOOL)hasAction;
+
+// Other configurations
+- (instancetype)withApplicationIconBadgeNumber:(NSInteger)applicationIconBadgeNumber;
+- (instancetype)withSoundName:(NSString *)soundName;
+- (instancetype)withUserInfo:(NSDictionary *)userInfo;
+
+// Scheduling
+- (instancetype)timeZone:(NSTimeZone *)timeZone;
+- (instancetype)fireAt:(NSDate *)date;
+- (instancetype)fireDailyAtHour:(NSInteger)hour minute:(NSInteger)minute second:(NSInteger)second;
+
+- (void)schedule;
+
+@end
+
 @interface MMPReactiveNotification : NSObject
 
 + (instancetype)service;
@@ -81,6 +107,7 @@
  *  @param notification local notification to be scheduled.
  */
 - (void)scheduleLocalNotification:(UILocalNotification *)notification;
+/*
 - (void)scheduleLocalNotificationWithAlert:(NSString *)alertBody toBeFiredAt:(NSDate *)fireDate;
 - (void)scheduleLocalNotificationWithAlert:(NSString *)alertBody
                               withUserInfo:(NSDictionary *)userInfo
@@ -90,5 +117,13 @@
                               withUserInfo:(NSDictionary *)userInfo
                               withCategory:(NSString *)category
                                toBeFiredAt:(NSDate *)fireDate;
+- (void)scheduleDailyLocalNotificationWithAlert:(NSString *)alertBody
+                                      withSound:(NSString *)soundName
+                                   withUserInfo:(NSDictionary *)userInfo
+                                   withCategory:(NSString *)category
+                            withIconBadgeNumber:(NSInteger)applicationIconBadgeNumber
+                                toBeFiredAtHour:(NSInteger)hour minute:(NSInteger)minute second:(NSInteger)second
+                                     inTimeZone:(NSTimeZone *)timeZone;
+*/
 
 @end

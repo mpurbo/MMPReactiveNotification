@@ -55,13 +55,6 @@ To receive local notifications, use `localNotifications` method:
                            }];
 ```
 
-To schedule a local notification, use `scheduleLocalNotification:`, `scheduleLocalNotificationWithAlert:toBeFiredAt:` methods or some other variants (see the header file):
-```objc
-[[MMPReactiveNotification service] scheduleLocalNotificationWithAlert:@"Hello, is it me you're looking for?"
-                                                          toBeFiredAt:someDate];
-```
-This scheduling will also automatically register notification settings if it hasn't been done previously.
-
 ## Custom Settings
 
 Default settings for remote push registration are:
@@ -80,9 +73,17 @@ To customize these settings, use `notificationTypes` and `categories` methods as
                             }];
 ```
 
-## Roadmap
+## Scheduling Local Notifications
 
-* 0.4: Remote notification with custom handler, `didFinishLaunchingWithOptions` integration.
+To create a local notification, use a new `MMPLocalNotificationSpec` to first specify the notification, then call `schedule` method to schedule it:
+```objc
+[[[[[[MMPLocalNotificationSpec new]
+                               withAlertBody:@"Your daily quiz is now available!"]
+                               withSoundName:UILocalNotificationDefaultSoundName] withCategory:@"Quiz"]
+                               fireDailyAtHour:18 minute:0 second:0]
+                               schedule];
+```
+This scheduling will also automatically register notification settings if it hasn't been done previously.
 
 ## Contact
 

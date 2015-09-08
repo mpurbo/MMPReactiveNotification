@@ -1,5 +1,9 @@
 # MMPReactiveNotification CHANGELOG
 
+## 0.4.0
+
+* `MMPLocalNotificationSpec` for specifying and scheduling local notification.
+
 ## 0.3.2
 
 * Add `remoteNotificationsOnLaunch`.

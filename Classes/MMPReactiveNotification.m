@@ -13,6 +13,114 @@
 #   define MMPRxN_LOG(...)
 #endif
 
+@interface MMPLocalNotificationSpec()
+
+@property (nonatomic, strong) UILocalNotification *localNotification;
+
+@end
+
+@implementation MMPLocalNotificationSpec
+
+- (id)init {
+    if (self = [super init]) {
+        self.localNotification = [UILocalNotification new];
+    }
+    return self;
+}
+
+- (id)initWithNotification:(UILocalNotification *)notification {
+    if (self = [super init]) {
+        self.localNotification = notification;
+    }
+    return self;
+}
+
+- (instancetype)withAlertBody:(NSString *)alertBody {
+    _localNotification.alertBody = alertBody;
+    return self;
+}
+
+- (instancetype)withAlertAction:(NSString *)alertAction {
+    _localNotification.alertAction = alertAction;
+    return self;
+}
+
+- (instancetype)withAlertTitle:(NSString *)alertTitle {
+    _localNotification.alertTitle = alertTitle;
+    return self;
+}
+
+- (instancetype)withAlertLaunchImage:(NSString *)alertLaunchImage {
+    _localNotification.alertLaunchImage = alertLaunchImage;
+    return self;
+}
+
+- (instancetype)withCategory:(NSString *)category {
+    _localNotification.category = category;
+    return self;
+}
+
+- (instancetype)hasAction:(BOOL)hasAction {
+    _localNotification.hasAction = hasAction;
+    return self;
+}
+
+- (instancetype)withApplicationIconBadgeNumber:(NSInteger)applicationIconBadgeNumber {
+    _localNotification.applicationIconBadgeNumber = applicationIconBadgeNumber;
+    return self;
+}
+
+- (instancetype)withSoundName:(NSString *)soundName {
+    _localNotification.soundName = soundName;
+    return self;
+}
+
+- (instancetype)withUserInfo:(NSDictionary *)userInfo {
+    _localNotification.userInfo = userInfo;
+    return self;
+}
+
+- (instancetype)fireAt:(NSDate *)date {
+    _localNotification.fireDate = date;
+    return self;
+}
+
+- (instancetype)fireDailyAtHour:(NSInteger)hour minute:(NSInteger)minute second:(NSInteger)second {
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+    NSCalendar *gregorian = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+    NSDateComponents *components = [gregorian components:(NSCalendarUnitHour|NSCalendarUnitMinute|NSCalendarUnitSecond) fromDate:[NSDate new]];
+#else
+    NSCalendar *gregorian = [NSCalendar calendarWithIdentifier:NSGregorianCalendar];
+    NSDateComponents *components = [gregorian components:(NSHourCalendarUnit|NSMinuteCalendarUnit|NSSecondCalendarUnit) fromDate:[NSDate new]];
+#endif
+    if (_localNotification.timeZone != nil) {
+        gregorian.timeZone = _localNotification.timeZone;
+    }
+    
+    [components setHour:-[components hour] + hour];
+    [components setMinute:-[components minute] + minute];
+    [components setSecond:-[components second] + second];
+    
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+    _localNotification.repeatInterval = NSCalendarUnitDay;
+#else
+    _localNotification.repeatInterval = NSDayCalendarUnit;
+#endif    
+    return [self fireAt:[gregorian dateByAddingComponents:components toDate:[NSDate new] options:0]];
+}
+
+- (instancetype)timeZone:(NSTimeZone *)timeZone {
+    _localNotification.timeZone = timeZone;
+    return self;
+}
+
+- (void)schedule {
+    [[MMPReactiveNotification service] scheduleLocalNotification:_localNotification];
+}
+
+@end
+
+
 @interface MMPReactiveNotification()
 
 @property (nonatomic, assign) UIResponder<UIApplicationDelegate> *delegate;
@@ -214,14 +322,23 @@
 #endif
 }
 
+/*
 - (void)scheduleLocalNotificationWithAlert:(NSString *)alertBody toBeFiredAt:(NSDate *)fireDate {
-    [self scheduleLocalNotificationWithAlert:alertBody withSound:UILocalNotificationDefaultSoundName withUserInfo:nil withCategory:nil toBeFiredAt:fireDate];
+    [self scheduleLocalNotificationWithAlert:alertBody
+                                   withSound:UILocalNotificationDefaultSoundName
+                                withUserInfo:nil
+                                withCategory:nil
+                                 toBeFiredAt:fireDate];
 }
 
 - (void)scheduleLocalNotificationWithAlert:(NSString *)alertBody
                               withUserInfo:(NSDictionary *)userInfo
                                toBeFiredAt:(NSDate *)fireDate {
-    [self scheduleLocalNotificationWithAlert:alertBody withSound:UILocalNotificationDefaultSoundName withUserInfo:userInfo withCategory:nil toBeFiredAt:fireDate];
+    [self scheduleLocalNotificationWithAlert:alertBody
+                                   withSound:UILocalNotificationDefaultSoundName
+                                withUserInfo:userInfo
+                                withCategory:nil
+                                 toBeFiredAt:fireDate];
 }
 
 - (void)scheduleLocalNotificationWithAlert:(NSString *)alertBody
@@ -241,5 +358,54 @@
     }
     [self scheduleLocalNotification:localNotification];
 }
+
+- (void)scheduleDailyLocalNotificationWithAlert:(NSString *)alertBody
+                                      withSound:(NSString *)soundName
+                                   withUserInfo:(NSDictionary *)userInfo
+                                   withCategory:(NSString *)category
+                            withIconBadgeNumber:(NSInteger)applicationIconBadgeNumber
+                                toBeFiredAtHour:(NSInteger)hour minute:(NSInteger)minute second:(NSInteger)second
+                                     inTimeZone:(NSTimeZone *)timeZone {
+    
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+    NSCalendar *gregorian = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+    NSDateComponents *components = [gregorian components:(NSCalendarUnitHour|NSCalendarUnitMinute|NSCalendarUnitSecond) fromDate:[NSDate new]];
+#else
+    NSCalendar *gregorian = [NSCalendar calendarWithIdentifier:NSGregorianCalendar];
+    NSDateComponents *components = [gregorian components:(NSHourCalendarUnit|NSMinuteCalendarUnit|NSSecondCalendarUnit) fromDate:[NSDate new]];
+#endif
+    if (timeZone != nil) {
+        gregorian.timeZone = timeZone;
+    }
+    
+    [components setHour:-[components hour] + hour];
+    [components setMinute:-[components minute] + minute];
+    [components setSecond:-[components second] + second];
+    NSDate *todayAtSpecHour = [gregorian dateByAddingComponents:components toDate:[NSDate new] options:0];
+
+    UILocalNotification *localNotification = [UILocalNotification new];
+    localNotification.alertBody = alertBody;
+    localNotification.soundName = soundName;
+    localNotification.applicationIconBadgeNumber = applicationIconBadgeNumber;
+    if (userInfo) {
+        localNotification.userInfo = userInfo;
+    }
+    if (category) {
+        localNotification.category = category;
+    }
+    
+    localNotification.fireDate = todayAtSpecHour;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+    localNotification.repeatInterval = NSCalendarUnitDay;
+#else
+    localNotification.repeatInterval = NSDayCalendarUnit;
+#endif
+    if (timeZone != nil) {
+        localNotification.timeZone = timeZone;
+    }
+    
+    [self scheduleLocalNotification:localNotification];
+}
+*/
 
 @end
