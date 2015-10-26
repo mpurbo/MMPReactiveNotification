@@ -224,7 +224,7 @@
         UIApplication *app = [UIApplication sharedApplication];
         
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
-        if ([application respondsToSelector:@selector(registerUserNotificationSettings:)]) {
+        if ([app respondsToSelector:@selector(registerUserNotificationSettings:)]) {
             [app registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:self.types
                                                                                     categories:self.categories]];
             [app registerForRemoteNotifications];
