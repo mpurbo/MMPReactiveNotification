@@ -1,5 +1,9 @@
 # MMPReactiveNotification CHANGELOG
 
+## 0.4.1
+
+* Fixes #5 (Crash on 7, unrecognized selector: registerUserNotificationSettings)
+
 ## 0.4.0
 
 * `MMPLocalNotificationSpec` for specifying and scheduling local notification.
